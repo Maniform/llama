@@ -5,7 +5,6 @@ import json
 import os
 import sys
 import time
-import curses
 from pathlib import Path
 from typing import List, Literal, Optional, Tuple, TypedDict
 
@@ -107,13 +106,13 @@ class Llama:
     @torch.inference_mode()
     def generate(
         self,
-        cursor,
         prompt_tokens: List[List[int]],
         max_gen_len: int,
         temperature: float = 0.6,
         top_p: float = 0.9,
         logprobs: bool = False,
         echo: bool = False,
+        printFunction = None,
     ) -> Tuple[List[List[int]], Optional[List[List[float]]]]:
         params = self.model.params
         bsz = len(prompt_tokens)
@@ -136,9 +135,6 @@ class Llama:
         input_text_mask = tokens != pad_id
         sentence_tokens = []
         sentence = ""
-        y = 0
-        x = 0
-        y, x = cursor.getyx()
         for cur_pos in range(min_prompt_len, total_len):
             logits = self.model.forward(tokens[:, prev_pos:cur_pos], prev_pos)
             if logprobs:
@@ -164,11 +160,8 @@ class Llama:
                 next_token == self.tokenizer.eos_id
             )
             prev_pos = cur_pos
-            sentence_tokens.append(next_token.tolist()[0])
-            sentence = self.tokenizer.decode(sentence_tokens)
-            cursor.addstr(y, x, sentence)
-            cursor.refresh()
-            # print(sentence, end='\r')
+            if printFunction is not None and callable(printFunction):
+                printFunction(self, next_token.tolist()[0])
             if all(eos_reached):
                 break
 
@@ -193,7 +186,6 @@ class Llama:
 
     def text_completion(
         self,
-        cursor,
         prompts: List[str],
         temperature: float = 0.6,
         top_p: float = 0.9,
@@ -206,7 +198,6 @@ class Llama:
             max_gen_len = self.model.params.max_seq_len - 1
         prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=False) for x in prompts]
         generation_tokens, generation_logprobs = self.generate(
-            cursor,
             prompt_tokens=prompt_tokens,
             max_gen_len=max_gen_len,
             temperature=temperature,
@@ -227,7 +218,6 @@ class Llama:
 
     def chat_completion(
         self,
-        cursor,
         dialogs: List[Dialog],
         temperature: float = 0.6,
         top_p: float = 0.9,
@@ -285,7 +275,6 @@ class Llama:
             prompt_tokens.append(dialog_tokens)
 
         generation_tokens, generation_logprobs = self.generate(
-            cursor,
             prompt_tokens=prompt_tokens,
             max_gen_len=max_gen_len,
             temperature=temperature,
