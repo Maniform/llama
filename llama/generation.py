@@ -161,7 +161,9 @@ class Llama:
             )
             prev_pos = cur_pos
             if printFunction is not None and callable(printFunction):
-                printFunction(self, next_token.tolist()[0])
+                sentence_tokens.append(next_token)
+                sentence = self.tokenizer.decode(sentence_tokens)
+                printFunction(self, sentence)
             if all(eos_reached):
                 break
 
