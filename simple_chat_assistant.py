@@ -32,6 +32,7 @@ def main(
             if question != "exit":
                 dialogs[index].append({"role": "user", "content": question})
                 log.write("You: " + question + "\n\n")
+                log.flush()
 
                 results = generator.chat_completion(
                     dialogs,  # type: ignore
@@ -41,7 +42,8 @@ def main(
                 )
 
                 print("\n" + results[-1]["generation"]["content"] + "\n")
-                log.write("Assistant: " + results[-1]["generation"]["content"] + "\n\n")
+                log.write("Assistant:" + results[-1]["generation"]["content"] + "\n\n")
+                log.flush()
                 dialogs[index].append({"role": "assistant", "content": results[-1]["generation"]["content"]})
 
 if __name__ == "__main__":
