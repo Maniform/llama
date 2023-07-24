@@ -113,6 +113,7 @@ class Llama:
         logprobs: bool = False,
         echo: bool = False,
         printFunction = None,
+        printFunctionArguments = None,
     ) -> Tuple[List[List[int]], Optional[List[List[float]]]]:
         params = self.model.params
         bsz = len(prompt_tokens)
@@ -161,9 +162,10 @@ class Llama:
             )
             prev_pos = cur_pos
             if printFunction is not None and callable(printFunction):
-                sentence_tokens.append(next_token)
+                print(next_token)
+                sentence_tokens.append(next_token.tolist()[0])
                 sentence = self.tokenizer.decode(sentence_tokens)
-                printFunction(self, sentence)
+                printFunction(self, sentence, printFunctionArguments)
             if all(eos_reached):
                 break
 
@@ -225,6 +227,8 @@ class Llama:
         top_p: float = 0.9,
         max_gen_len: Optional[int] = None,
         logprobs: bool = False,
+        printFunction = None,
+        printFunctionArguments = None,
     ) -> List[ChatPrediction]:
         if max_gen_len is None:
             max_gen_len = self.model.params.max_seq_len - 1
@@ -282,6 +286,8 @@ class Llama:
             temperature=temperature,
             top_p=top_p,
             logprobs=logprobs,
+            printFunction=printFunction,
+            printFunctionArguments=printFunctionArguments,
         )
         if logprobs:
             return [
