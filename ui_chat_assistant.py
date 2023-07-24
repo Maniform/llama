@@ -14,19 +14,22 @@ import threading
 def on_enter(event, send_button):
     send_button.invoke()
 
-def process_send_message(input_entry, text_area, dialogs, generator, max_gen_len, temperature, top_p, thread):
+def process_send_message(input_entry, text_area, to_disable, dialogs, generator, max_gen_len, temperature, top_p, thread, log_file = None):
     question = input_entry.get()
     if question:
-        text_area.configure(state='normal')
-        text_area.insert('end', "You : " + question + "\n\nAssistant :")
-        text_area.configure(state='disabled')
+        pos = text_area.index(tk.INSERT)
+        text_area_insert(text_area, pos, "You : " + question + "\n\nAssistant :")
         input_entry.delete(0, 'end')
-        input_entry["state"] = "disabled"
+        for widget in to_disable:
+            widget.configure(state="disabled")
         dialogs[0].append({"role": "user", "content": question})
-        thread = threading.Thread(target=send_message, args=(input_entry, text_area, dialogs, generator, max_gen_len, temperature, top_p))
+        if log_file is not None:
+            with open(log_file, 'a') as f:
+                f.write("You : " + question + "\n\nAssistant :")
+        thread = threading.Thread(target=send_message, args=(input_entry, text_area, to_disable, dialogs, generator, max_gen_len, temperature, top_p, log_file))
         thread.start()
 
-def send_message(input_entry, text_area, dialogs, generator, max_gen_len, temperature, top_p):
+def send_message(input_entry, text_area, to_enable, dialogs, generator, max_gen_len, temperature, top_p, log_file = None):
     pos = text_area.index(tk.INSERT)
     results = generator.chat_completion(
         dialogs,  # type: ignore
@@ -38,8 +41,12 @@ def send_message(input_entry, text_area, dialogs, generator, max_gen_len, temper
     )
     dialogs[0].append({"role": "assistant", "content": results[-1]["generation"]["content"]})
     pos = text_area.index(tk.INSERT)
-    text_area.after(0, lambda: text_area_insert(text_area, pos, "\n\n"))
-    input_entry["state"] = "normal"
+    text_area.after(0, lambda: text_area_insert(text_area, pos, "\n\n\n"))
+    if log_file is not None:
+            with open(log_file, 'a') as f:
+                f.write(results[-1]["generation"]["content"] + "\n\n")
+    for widget in to_enable:
+        widget.configure(state="normal")
 
 def update_text_area_text(generator, text, arguments):
     arguments[0].after(0, lambda: text_area_insert(arguments[0], arguments[1], text))
@@ -80,27 +87,30 @@ def main(
         max_batch_size=max_batch_size,
     )
 
-    dialogs = [[{"role": "system", "content": "You are an expert helping answering questions."}]]
+    # dialogs = [[{"role": "system", "content": "You are an expert helping answering questions."}]]
+    dialogs = [[]]
 
     thread = None
 
     root = tk.Tk()
     root.title("Assistant Llama")
 
-    # Créer la zone de texte avec scrolling
     text_area = scrolledtext.ScrolledText(root, wrap='word', state='disabled')
-    text_area.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky='nsew')
+    text_area.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky='nsew')
 
     # Créer la ligne d'entrée et le bouton "Envoyer"
     input_entry = tk.Entry(root)
     input_entry.grid(row=1, column=0, padx=10, pady=10, sticky='ew')
     input_entry.bind('<Return>', lambda event: on_enter(event, send_button))
+    input_entry.bind('<KP_Enter>', lambda event: on_enter(event, send_button))
 
-    send_button = tk.Button(root, text="Envoyer", command=lambda: process_send_message(input_entry, text_area, dialogs, generator, max_gen_len, temperature, top_p, thread))
+    send_button = tk.Button(root, text="Envoyer", command=lambda: process_send_message(input_entry, text_area, [input_entry, send_button, clear_button], dialogs, generator, max_gen_len, temperature, top_p, thread, "log.txt"))
     send_button.grid(row=1, column=1, padx=10, pady=10, sticky='e')
 
     clear_button = tk.Button(root, text="Effacer", command=lambda: clear_text_area(text_area, dialogs))
     clear_button.grid(row=1, column=2, padx=10, pady=10, sticky='e')
+
+    input_entry.focus_set()
 
     # Redimensionner les cellules de la grille pour que la zone de texte ait la priorité
     root.grid_rowconfigure(0, weight=1)
