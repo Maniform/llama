@@ -49,6 +49,19 @@ def text_area_insert(text_area, pos, text):
     text_area.delete(pos, tk.END)
     text_area.insert(pos, text)
     text_area.configure(state='disabled')
+    text_area.see(tk.END)
+
+def clear_text_area(text_area, dialogs):
+    if dialogs[0][0]['role'] == "system":
+        system_prompt = dialogs[0][0]['content']
+        dialogs.clear()
+        dialogs.extend([[{"role": "system", "content": system_prompt}]])
+    else:
+        dialogs.clear()
+        dialogs.extend([[]])
+    text_area.configure(state='normal')
+    text_area.delete(1.0, tk.END)
+    text_area.configure(state='disabled')
 
 def main(
     ckpt_dir: str,
@@ -86,34 +99,14 @@ def main(
     send_button = tk.Button(root, text="Envoyer", command=lambda: process_send_message(input_entry, text_area, dialogs, generator, max_gen_len, temperature, top_p, thread))
     send_button.grid(row=1, column=1, padx=10, pady=10, sticky='e')
 
+    clear_button = tk.Button(root, text="Effacer", command=lambda: clear_text_area(text_area, dialogs))
+    clear_button.grid(row=1, column=2, padx=10, pady=10, sticky='e')
+
     # Redimensionner les cellules de la grille pour que la zone de texte ait la priorité
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
 
     root.mainloop()
-     
-    # question = ""
-    # index = 0
-    # dialogs = [[{"role": "system", "content": "You are an expert helping answering questions."}]]
-    # with open("log.txt", "w") as log:
-    #     while question != "exit":
-    #         question = input(">>> ")
-    #         if question != "exit":
-    #             dialogs[index].append({"role": "user", "content": question})
-    #             log.write("You: " + question + "\n\n")
-    #             log.flush()
-
-    #             results = generator.chat_completion(
-    #                 dialogs,  # type: ignore
-    #                 max_gen_len=max_gen_len,
-    #                 temperature=temperature,
-    #                 top_p=top_p,
-    #             )
-
-    #             print("\n" + results[-1]["generation"]["content"] + "\n")
-    #             log.write("Assistant:" + results[-1]["generation"]["content"] + "\n\n")
-    #             log.flush()
-    #             dialogs[index].append({"role": "assistant", "content": results[-1]["generation"]["content"]})
 
 if __name__ == "__main__":
     fire.Fire(main)

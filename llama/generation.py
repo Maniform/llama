@@ -162,7 +162,7 @@ class Llama:
             )
             prev_pos = cur_pos
             if printFunction is not None and callable(printFunction):
-                print(next_token)
+                # print(next_token)
                 sentence_tokens.append(next_token.tolist()[0])
                 sentence = self.tokenizer.decode(sentence_tokens)
                 printFunction(self, sentence, printFunctionArguments)
