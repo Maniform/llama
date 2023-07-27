@@ -196,8 +196,9 @@ class Llama:
         max_gen_len: Optional[int] = None,
         logprobs: bool = False,
         echo: bool = False,
+        printFunction = None,
+        printFunctionArguments = None,
     ) -> List[CompletionPrediction]:
-        cursor.addstr(0, 0, "CONNARD !")
         if max_gen_len is None:
             max_gen_len = self.model.params.max_seq_len - 1
         prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=False) for x in prompts]
@@ -208,6 +209,8 @@ class Llama:
             top_p=top_p,
             logprobs=logprobs,
             echo=echo,
+            printFunction = None,
+            printFunctionArguments = None,
         )
         if logprobs:
             return [

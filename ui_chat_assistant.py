@@ -32,6 +32,7 @@ def process_send_message(
         input_entry.delete(0, 'end')
         if role == "user":
             dialogs[0].append({"role": role, "content": question})
+            text_area.see(tk.END)
             pos = text_area.index(tk.INSERT)
             text_area_insert(text_area, pos, "You : " + question + "\n\nAssistant :")
             for widget in to_disable:
@@ -123,7 +124,7 @@ def main(
     thread = None
 
     root = tk.Tk()
-    root.title("Assistant Llama")
+    root.title("My Little Llama")
 
     text_area = scrolledtext.ScrolledText(root, wrap='word', state='disabled')
     text_area.grid(row=0, column=0, columnspan=4, padx=10, pady=10, sticky='nsew')
