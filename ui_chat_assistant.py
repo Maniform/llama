@@ -89,6 +89,17 @@ def text_area_insert(text_area, pos, text):
     text_area.configure(state='disabled')
     text_area.see(tk.END)
 
+def undo_last_chat(undo_button, text_area, dialogs):
+    if len(dialogs) > 0 and len(dialogs[0]) >= 2:
+        dialogs[0].pop()
+        dialogs[0].pop()
+        pos = text_area.index(tk.INSERT)
+        text_area_insert(text_area, pos, "Undo.\n\n")
+        if len(dialogs[0]) < 2:
+            undo_button.configure(state="disabled")
+    else:
+        undo_button.configure(state="normal")
+
 def clear_text_area(text_area, dialogs):
     if len(dialogs) > 0 and len(dialogs[0]) > 0 and len(dialogs[0][0]) > 0 and dialogs[0][0]['role'] == "system":
         system_prompt = dialogs[0][0]['content']
@@ -118,8 +129,8 @@ def main(
         max_batch_size=max_batch_size,
     )
 
-    # dialogs = [[{"role": "system", "content": "You are an expert helping answering questions."}]]
-    dialogs = [[]]
+    dialogs = [[{"role": "system", "content": "You are an expert helping answering questions."}]]
+    # dialogs = [[]]
 
     thread = None
 
@@ -127,7 +138,7 @@ def main(
     root.title("My Little Llama")
 
     text_area = scrolledtext.ScrolledText(root, wrap='word', state='disabled')
-    text_area.grid(row=0, column=0, columnspan=4, padx=10, pady=10, sticky='nsew')
+    text_area.grid(row=0, column=0, columnspan=5, padx=10, pady=10, sticky='nsew')
 
     role_value = tk.StringVar(root)
     role_value.set("user")
@@ -141,11 +152,15 @@ def main(
     input_entry.bind('<Return>', lambda event: on_enter(event, send_button))
     input_entry.bind('<KP_Enter>', lambda event: on_enter(event, send_button))
 
-    send_button = tk.Button(root, text="Envoyer", command=lambda: process_send_message(input_entry, text_area, [input_entry, send_button, clear_button], role_value.get(), dialogs, generator, max_gen_len, temperature, top_p, thread, "log.txt"))
+    send_button = tk.Button(root, text="Envoyer", command=lambda: process_send_message(input_entry, text_area, [input_entry, send_button, undo_button, clear_button], role_value.get(), dialogs, generator, max_gen_len, temperature, top_p, thread, "log.txt"))
     send_button.grid(row=1, column=2, padx=10, pady=10, sticky='e')
 
+    undo_button = tk.Button(root, text="Annuler", command=lambda: undo_last_chat(undo_button, text_area, dialogs))
+    undo_button.configure(state="disabled")
+    undo_button.grid(row=1, column=3, padx=10, pady=10, sticky='e')
+
     clear_button = tk.Button(root, text="Effacer", command=lambda: clear_text_area(text_area, dialogs))
-    clear_button.grid(row=1, column=3, padx=10, pady=10, sticky='e')
+    clear_button.grid(row=1, column=4, padx=10, pady=10, sticky='e')
 
     input_entry.focus_set()
 

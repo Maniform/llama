@@ -1,8 +1,8 @@
 #!/bin/bash
 
-script="example_chat_completion.py"
+script="ui_chat_assistant.py"
 model="llama-2-7b-chat/"
-max_seq_len=1024
+max_seq_len=4096
 
 set_model=false
 set_max_seq_len=false
@@ -26,4 +26,4 @@ for arg in "$@"; do
     fi
 done
 
-torchrun --nproc_per_node 1 $script --ckpt_dir $model --tokenizer_path tokenizer.model --max_seq_len $max_seq_len --max_batch_size 4
+torchrun --nproc_per_node 1 $script --ckpt_dir $model --tokenizer_path tokenizer.model --max_seq_len $max_seq_len --max_batch_size 1

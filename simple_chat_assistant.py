@@ -30,21 +30,30 @@ def main(
         while question != "exit":
             question = input(">>> ")
             if question != "exit":
-                dialogs[index].append({"role": "user", "content": question})
-                log.write("You: " + question + "\n\n")
-                log.flush()
+                if question == "clear":
+                    system_prompt = dialogs[0][0]['content']
+                    dialogs.clear()
+                    dialogs.extend([[{"role": "system", "content": system_prompt}]])
+                elif question == "undo":
+                    if len(dialogs[index]) >= 2:
+                        dialogs[index].pop()
+                        dialogs[index].pop()
+                else:
+                    dialogs[index].append({"role": "user", "content": question})
+                    log.write("You: " + question + "\n\n")
+                    log.flush()
 
-                results = generator.chat_completion(
-                    dialogs,  # type: ignore
-                    max_gen_len=max_gen_len,
-                    temperature=temperature,
-                    top_p=top_p,
-                )
+                    results = generator.chat_completion(
+                        dialogs,  # type: ignore
+                        max_gen_len=max_gen_len,
+                        temperature=temperature,
+                        top_p=top_p,
+                    )
 
-                print("\n" + results[-1]["generation"]["content"] + "\n")
-                log.write("Assistant:" + results[-1]["generation"]["content"] + "\n\n")
-                log.flush()
-                dialogs[index].append({"role": "assistant", "content": results[-1]["generation"]["content"]})
+                    print("\n" + results[-1]["generation"]["content"] + "\n")
+                    log.write("Assistant:" + results[-1]["generation"]["content"] + "\n\n")
+                    log.flush()
+                    dialogs[index].append({"role": "assistant", "content": results[-1]["generation"]["content"]})
 
 if __name__ == "__main__":
     fire.Fire(main)
